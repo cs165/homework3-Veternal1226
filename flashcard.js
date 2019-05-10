@@ -9,13 +9,27 @@
 class Flashcard {
   constructor(containerElement, frontText, backText) {
     this.containerElement = containerElement;
-
-    this._flipCard = this._flipCard.bind(this);
+    this.body=document.querySelector('body');
 
     this.flashcardElement = this._createFlashcardDOM(frontText, backText);
-    this.containerElement.append(this.flashcardElement);
+
+    this._flipCard = this._flipCard.bind(this);
+    this._initCard=this._initCard.bind(this);
+    this._moveCard=this._moveCard.bind(this);
+    this._releaseCard=this._releaseCard.bind(this);
 
     this.flashcardElement.addEventListener('pointerup', this._flipCard);
+    this.flashcardElement.addEventListener('pointerdown', this._initCard);
+    this.flashcardElement.addEventListener('pointermove', this._moveCard);
+    this.flashcardElement.addEventListener('pointerup', this._releaseCard);
+  }
+
+  show() {
+    this.containerElement.append(this.flashcardElement);
+  }
+
+  hide() {
+    this.containerElement.removeChild(this.flashcardElement);
   }
 
   // Creates the DOM object representing a flashcard with the given
@@ -52,6 +66,51 @@ class Flashcard {
   }
 
   _flipCard(event) {
+    if(this.originX === event.clientX && this.originY === event.clientY)
     this.flashcardElement.classList.toggle('show-word');
+  }
+
+  _initCard(event) {
+    //console.log(event);
+    this.originX=event.clientX;
+    this.originY=event.clientY;
+  }
+
+  _moveCard(event) {
+    if(this.originX || this.originY) {
+      const deltaX=event.clientX-this.originX;
+      const deltaY=event.clientY-this.originY;
+      event.currentTarget.style.transition='';
+      event.currentTarget.style.transform='translate('+deltaX+'px, '+deltaY+'px) rotate('+deltaX*0.2+'deg)';
+      if(deltaX >= 150) {
+        this.body.classList.add('out');
+        this.right=1;
+        this.wrong=0;
+      }
+      else if(deltaX <=-150) {
+        this.body.classList.add('out');
+        this.right=0;
+        this.wrong=1;
+      }
+      else {
+        this.body.classList.remove('out');
+        this.right=0;
+        this.wrong=0;
+      }
+      document.dispatchEvent(new CustomEvent('dragInside', {detail: {right:this.right,wrong:this.wrong} } ));
+    }
+  }
+
+  _releaseCard(event) {
+    const deltaX=event.clientX-this.originX;
+    if(deltaX >= 150 || deltaX <=-150) {
+      this.flashcardElement.classList.add('show-word');
+      document.dispatchEvent(new CustomEvent('dragOutside', {detail: {right:this.right,wrong:this.wrong} } ));
+    }
+    event.currentTarget.style.transition='0.6s';
+    event.currentTarget.style.transform='';
+    this.originX=null;
+    this.originY=null;
+    this.body.classList.remove('out');
   }
 }

@@ -1,3 +1,19 @@
 /*
 TODO(you): Write any additional styles you need here.
 */
+.flashcard-box .word {
+    animation: fadein 0.5s;
+}
+
+@keyframes fadein {
+    0% {
+        margin-top: 100%;
+    }
+    100% {
+        margin-top: 0%;
+    }
+}
+
+body.out {
+    background-color: #97b7b7;
+}
